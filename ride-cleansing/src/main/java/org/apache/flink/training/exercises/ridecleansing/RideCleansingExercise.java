@@ -20,24 +20,14 @@ package org.apache.flink.training.exercises.ridecleansing;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.functions.FilterFunction;
-import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.PrintSinkFunction;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
-import org.apache.flink.training.exercises.common.datatypes.EnrichedRide;
 import org.apache.flink.training.exercises.common.datatypes.TaxiRide;
 import org.apache.flink.training.exercises.common.sources.TaxiRideGenerator;
 import org.apache.flink.training.exercises.common.utils.GeoUtils;
-
-import org.apache.flink.util.Collector;
-import org.joda.time.Interval;
-import org.joda.time.Minutes;
-
-//import org.apache.flink.training.exercises.common.utils.MissingSolutionException;
+import org.apache.flink.training.exercises.common.utils.MissingSolutionException;
 
 /**
  * The Ride Cleansing exercise from the Flink training.
@@ -48,11 +38,10 @@ import org.joda.time.Minutes;
 public class RideCleansingExercise {
 
     private final SourceFunction<TaxiRide> source;
-    private final SinkFunction<EnrichedRide> sink;
-
+    private final SinkFunction<TaxiRide> sink;
 
     /** Creates a job using the source and sink provided. */
-    public RideCleansingExercise(SourceFunction<TaxiRide> source, SinkFunction<EnrichedRide> sink) {
+    public RideCleansingExercise(SourceFunction<TaxiRide> source, SinkFunction<TaxiRide> sink) {
 
         this.source = source;
         this.sink = sink;
@@ -82,24 +71,7 @@ public class RideCleansingExercise {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
         // set up the pipeline
-//        env.addSource(source).filter(new NYCFilter()).addSink(sink);
-        DataStream<EnrichedRide> enrichedNYCRides = env.addSource(source).filter(new NYCFilter()).map(new Enrichment());
-//        env.addSource(source).flatMap(new NYCEnrichment()).addSink(sink);
-
-        DataStream<Tuple2<Integer, Minutes>> minutesByStartCell = enrichedNYCRides
-                .flatMap(new FlatMapFunction<EnrichedRide, Tuple2<Integer, Minutes>>() {
-                    @Override
-                    public void flatMap(EnrichedRide ride,
-                                        Collector<Tuple2<Integer, Minutes>> out) throws Exception {
-                        if (!ride.isStart) {
-                            Interval rideInterval = new Interval(ride.startTime.toEpochMilli(), ride.endTime.toEpochMilli());
-                            Minutes duration = rideInterval.toDuration().toStandardMinutes();
-                            out.collect(new Tuple2<>(ride.startCell, duration));
-                        }
-                    }
-                }).keyBy(value -> value.f0).maxBy(1);
-
-        minutesByStartCell.print();
+        env.addSource(source).filter(new NYCFilter()).addSink(sink);
 
         // run the pipeline and return the result
         return env.execute("Taxi Ride Cleansing");
@@ -115,30 +87,6 @@ public class RideCleansingExercise {
                 return GeoUtils.isInNYC(taxiRide.endLon, taxiRide.endLat);
             }
 //            throw new MissingSolutionException();
-        }
-    }
-
-    /**
-     * Enrichment of the ride record with additional information.
-     *
-     * <p>This is a helper class that is not part of the solution.
-     */
-    public static class Enrichment implements MapFunction<TaxiRide, EnrichedRide> {
-
-        @Override
-        public EnrichedRide map(TaxiRide taxiRide) throws Exception {
-            return new EnrichedRide(taxiRide);
-        }
-    }
-
-
-    public static class NYCEnrichment implements FlatMapFunction<TaxiRide, EnrichedRide> {
-        @Override
-        public void flatMap(TaxiRide taxiRide, Collector<EnrichedRide> out) throws Exception {
-            FilterFunction<TaxiRide> valid = new NYCFilter();
-            if (valid.filter(taxiRide)) {
-                out.collect(new EnrichedRide(taxiRide));
-            }
         }
     }
 }
