@@ -2,7 +2,11 @@ package org.apache.flink.training.exercises.common.datatypes;
 
 import org.apache.flink.training.exercises.common.utils.GeoUtils;
 
+import java.time.Instant;
+
 public class EnrichedRide extends TaxiRide {
+    public Instant startTime;
+    public Instant endTime;
     public int startCell;
     public int endCell;
 
@@ -19,6 +23,9 @@ public class EnrichedRide extends TaxiRide {
         this.passengerCnt = ride.passengerCnt;
         this.taxiId = ride.taxiId;
         this.driverId = ride.driverId;
+        this.startTime = ride.isStart ? ride.eventTime : null;
+        this.endTime = ride.isStart ? null : ride.eventTime;
+
         this.startCell = GeoUtils.mapToGridCell(ride.startLon, ride.startLat);
         this.endCell = GeoUtils.mapToGridCell(ride.endLon, ride.endLat);
     }
