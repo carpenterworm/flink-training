@@ -88,6 +88,9 @@ subprojects {
         shadow "org.apache.flink:flink-streaming-java_${scalaBinaryVersion}:${flinkVersion}"
         shadow "org.apache.flink:flink-streaming-scala_${scalaBinaryVersion}:${flinkVersion}"
 
+        // 添加 Joda-Time 依赖
+        implementation 'joda-time:joda-time:2.10.10'
+
         if (project != project(":common")) {
             implementation project(path: ':common')
             testImplementation(project(":common")) {
