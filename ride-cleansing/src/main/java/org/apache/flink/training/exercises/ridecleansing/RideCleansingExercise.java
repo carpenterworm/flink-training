@@ -38,6 +38,7 @@ import org.joda.time.Interval;
 import org.joda.time.Minutes;
 
 //import org.apache.flink.training.exercises.common.utils.MissingSolutionException;
+import org.apache.flink.training.exercises.common.utils.MissingSolutionException;
 
 /**
  * The Ride Cleansing exercise from the Flink training.
